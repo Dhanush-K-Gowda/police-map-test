@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { GoogleMap, useJsApiLoader, Marker } from '@react-google-maps/api';
+import { GoogleMap, useJsApiLoader, Marker, InfoWindow } from '@react-google-maps/api';
 
 const mapContainerStyle = {
   width: '100vw',
@@ -22,6 +22,7 @@ const App = () => {
 
   const [userLocation, setUserLocation] = useState(null);
   const [policeStations, setPoliceStations] = useState([]);
+  const [selectedStation, setSelectedStation] = useState(null);
 
   useEffect(() => {
     if (navigator.geolocation) {
@@ -58,9 +59,32 @@ const App = () => {
     }
   }, [userLocation]);
 
+  const fetchStationDetails = useCallback((station) => {
+    if (window.google) {
+      const service = new window.google.maps.places.PlacesService(document.createElement('div'));
+      const request = {
+        placeId: station.place_id,
+        fields: ['name', 'formatted_address', 'formatted_phone_number', 'rating']
+      };
+
+      service.getDetails(request, (place, status) => {
+        if (status === window.google.maps.places.PlacesServiceStatus.OK) {
+          setSelectedStation({
+            ...station,
+            ...place
+          });
+        }
+      });
+    }
+  }, []);
+
   const onMapLoad = useCallback((map) => {
     searchNearbyPoliceStations(map);
   }, [searchNearbyPoliceStations]);
+
+  const handleStationClick = useCallback((station) => {
+    fetchStationDetails(station);
+  }, [fetchStationDetails]);
 
   if (loadError) return <div>Error loading maps</div>;
   if (!isLoaded) return <div>Loading Maps</div>;
@@ -73,10 +97,11 @@ const App = () => {
         left: '50%',
         transform: 'translateX(-50%)',
         zIndex: 10,
-        backgroundColor: 'rgba(0, 0, 0, 0.7)',
+        backgroundColor: 'rgba(255, 255, 255, 0.7)',
         padding: '10px',
         borderRadius: '5px',
-        fontWeight: 'bold'
+        fontWeight: 'bold',
+        color:'black'
       }}>
         Stations Near You
       </div>
@@ -94,9 +119,9 @@ const App = () => {
             }}
           />
         )}
-        {policeStations.map((station, index) => (
+        {policeStations.map((station) => (
           <Marker
-            key={index}
+            key={station.place_id}
             position={{
               lat: station.geometry.location.lat(),
               lng: station.geometry.location.lng()
@@ -104,8 +129,35 @@ const App = () => {
             icon={{
               url: "https://maps.google.com/mapfiles/ms/icons/police.png"
             }}
+            onClick={() => handleStationClick(station)}
           />
         ))}
+        {selectedStation && (
+          <InfoWindow
+            position={{
+              lat: selectedStation.geometry.location.lat(),
+              lng: selectedStation.geometry.location.lng()
+            }}
+            onCloseClick={() => setSelectedStation(null)}
+          >
+            <div style={{ padding: '10px', maxWidth: '200px' }}>
+              <h3 style={{ margin: '0 0 10px', fontSize: '16px',color:'black' }}>{selectedStation.name}</h3>
+              <p style={{ margin: '0 0 5px', fontSize: '14px',color:'black' }}>
+                Address: {selectedStation.formatted_address || selectedStation.vicinity || 'Not available'}
+              </p>
+              {selectedStation.formatted_phone_number && (
+                <p style={{ margin: '0 0 5px', fontSize: '14px',color:'black' }}>
+                  Phone: {selectedStation.formatted_phone_number}
+                </p>
+              )}
+              {selectedStation.rating && (
+                <p style={{ margin: '0', fontSize: '14px',color:'black' }}>
+                  Rating: {selectedStation.rating} / 5
+                </p>
+              )}
+            </div>
+          </InfoWindow>
+        )}
       </GoogleMap>
     </div>
   );
