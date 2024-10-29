@@ -47,9 +47,9 @@ const App = () => {
       const service = new window.google.maps.places.PlacesService(map);
       const request = {
         location: userLocation,
-        radius: 500000, // Set to 50 km
-        type: ['health','doctor','medical'], // You can also try using 'doctor'
-        keyword: 'mental health, psychatrist,counselling,therapy' // Use keyword for mental health centers
+        radius: 50000, // Set to 50 km
+        type: ['health'], // You can also try using 'doctor'
+        keyword: 'mental health' // Use keyword for mental health centers
       };
 
       service.nearbySearch(request, (results, status) => {
@@ -115,20 +115,12 @@ const App = () => {
         onLoad={onMapLoad}
       >
         {userLocation && (
-          <Marker
-  key={center.place_id}
-  position={{
-    lat: center.geometry.location.lat(),
-    lng: center.geometry.location.lng()
-  }}
-  icon={{
-    url: "https://img.icons8.com/ios-filled/50/000000/hospital-room.png", // Hospital icon
-    scaledSize: new window.google.maps.Size(30, 30) // Adjust size if necessary
-  }}
-  onClick={() => handleCenterClick(center)} // Click handler to fetch details
-/>
-
-
+          <Marker 
+            position={userLocation}
+            icon={{
+              url: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png" // User location marker
+            }}
+          />
         )}
         {mentalHealthCenters.map((center) => (
           <Marker
