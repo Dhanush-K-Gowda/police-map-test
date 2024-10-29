@@ -21,8 +21,8 @@ const App = () => {
   });
 
   const [userLocation, setUserLocation] = useState(null);
-  const [policeStations, setPoliceStations] = useState([]);
-  const [selectedStation, setSelectedStation] = useState(null);
+  const [psychiatrists, setPsychiatrists] = useState([]);
+  const [selectedPsychiatrist, setSelectedPsychiatrist] = useState(null);
 
   useEffect(() => {
     if (navigator.geolocation) {
@@ -42,35 +42,36 @@ const App = () => {
     }
   }, []);
 
-  const searchNearbyPoliceStations = useCallback((map) => {
+  const searchNearbyPsychiatrists = useCallback((map) => {
     if (userLocation && window.google) {
       const service = new window.google.maps.places.PlacesService(map);
       const request = {
         location: userLocation,
         radius: 50000,
-        type: ['police']
+        type: ['doctor'], // You can also use 'health' or 'psychologist' based on available types
+        keyword: 'psychiatrist' // Keyword to refine the search
       };
 
       service.nearbySearch(request, (results, status) => {
         if (status === window.google.maps.places.PlacesServiceStatus.OK) {
-          setPoliceStations(results);
+          setPsychiatrists(results);
         }
       });
     }
   }, [userLocation]);
 
-  const fetchStationDetails = useCallback((station) => {
+  const fetchPsychiatristDetails = useCallback((psychiatrist) => {
     if (window.google) {
       const service = new window.google.maps.places.PlacesService(document.createElement('div'));
       const request = {
-        placeId: station.place_id,
+        placeId: psychiatrist.place_id,
         fields: ['name', 'formatted_address', 'formatted_phone_number', 'rating']
       };
 
       service.getDetails(request, (place, status) => {
         if (status === window.google.maps.places.PlacesServiceStatus.OK) {
-          setSelectedStation({
-            ...station,
+          setSelectedPsychiatrist({
+            ...psychiatrist,
             ...place
           });
         }
@@ -79,12 +80,12 @@ const App = () => {
   }, []);
 
   const onMapLoad = useCallback((map) => {
-    searchNearbyPoliceStations(map);
-  }, [searchNearbyPoliceStations]);
+    searchNearbyPsychiatrists(map);
+  }, [searchNearbyPsychiatrists]);
 
-  const handleStationClick = useCallback((station) => {
-    fetchStationDetails(station);
-  }, [fetchStationDetails]);
+  const handlePsychiatristClick = useCallback((psychiatrist) => {
+    fetchPsychiatristDetails(psychiatrist);
+  }, [fetchPsychiatristDetails]);
 
   if (loadError) return <div>Error loading maps</div>;
   if (!isLoaded) return <div>Loading Maps</div>;
@@ -101,9 +102,9 @@ const App = () => {
         padding: '10px',
         borderRadius: '5px',
         fontWeight: 'bold',
-        color:'black'
+        color: 'black'
       }}>
-        Stations Near You
+        Psychiatrists Near You
       </div>
       <GoogleMap
         mapContainerStyle={mapContainerStyle}
@@ -119,40 +120,40 @@ const App = () => {
             }}
           />
         )}
-        {policeStations.map((station) => (
+        {psychiatrists.map((psychiatrist) => (
           <Marker
-            key={station.place_id}
+            key={psychiatrist.place_id}
             position={{
-              lat: station.geometry.location.lat(),
-              lng: station.geometry.location.lng()
+              lat: psychiatrist.geometry.location.lat(),
+              lng: psychiatrist.geometry.location.lng()
             }}
             icon={{
-              url: "https://maps.google.com/mapfiles/ms/icons/police.png"
+              url: "https://maps.google.com/mapfiles/ms/icons/doctor.png" // You can use a doctor icon or customize it
             }}
-            onClick={() => handleStationClick(station)}
+            onClick={() => handlePsychiatristClick(psychiatrist)}
           />
         ))}
-        {selectedStation && (
+        {selectedPsychiatrist && (
           <InfoWindow
             position={{
-              lat: selectedStation.geometry.location.lat(),
-              lng: selectedStation.geometry.location.lng()
+              lat: selectedPsychiatrist.geometry.location.lat(),
+              lng: selectedPsychiatrist.geometry.location.lng()
             }}
-            onCloseClick={() => setSelectedStation(null)}
+            onCloseClick={() => setSelectedPsychiatrist(null)}
           >
             <div style={{ padding: '10px', maxWidth: '200px' }}>
-              <h3 style={{ margin: '0 0 10px', fontSize: '16px',color:'black' }}>{selectedStation.name}</h3>
-              <p style={{ margin: '0 0 5px', fontSize: '14px',color:'black' }}>
-                Address: {selectedStation.formatted_address || selectedStation.vicinity || 'Not available'}
+              <h3 style={{ margin: '0 0 10px', fontSize: '16px', color: 'black' }}>{selectedPsychiatrist.name}</h3>
+              <p style={{ margin: '0 0 5px', fontSize: '14px', color: 'black' }}>
+                Address: {selectedPsychiatrist.formatted_address || selectedPsychiatrist.vicinity || 'Not available'}
               </p>
-              {selectedStation.formatted_phone_number && (
-                <p style={{ margin: '0 0 5px', fontSize: '14px',color:'black' }}>
-                  Phone: {selectedStation.formatted_phone_number}
+              {selectedPsychiatrist.formatted_phone_number && (
+                <p style={{ margin: '0 0 5px', fontSize: '14px', color: 'black' }}>
+                  Phone: {selectedPsychiatrist.formatted_phone_number}
                 </p>
               )}
-              {selectedStation.rating && (
-                <p style={{ margin: '0', fontSize: '14px',color:'black' }}>
-                  Rating: {selectedStation.rating} / 5
+              {selectedPsychiatrist.rating && (
+                <p style={{ margin: '0', fontSize: '14px', color: 'black' }}>
+                  Rating: {selectedPsychiatrist.rating} / 5
                 </p>
               )}
             </div>
