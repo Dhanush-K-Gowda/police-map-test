@@ -21,8 +21,8 @@ const App = () => {
   });
 
   const [userLocation, setUserLocation] = useState(null);
-  const [psychiatrists, setPsychiatrists] = useState([]);
-  const [selectedPsychiatrist, setSelectedPsychiatrist] = useState(null);
+  const [mentalHealthCenters, setMentalHealthCenters] = useState([]);
+  const [selectedCenter, setSelectedCenter] = useState(null);
 
   useEffect(() => {
     if (navigator.geolocation) {
@@ -42,36 +42,38 @@ const App = () => {
     }
   }, []);
 
-  const searchNearbyPsychiatrists = useCallback((map) => {
+  const searchNearbyMentalHealthCenters = useCallback((map) => {
     if (userLocation && window.google) {
       const service = new window.google.maps.places.PlacesService(map);
       const request = {
         location: userLocation,
-        radius: 50000,
-        type: ['doctor'], // You can also use 'health' or 'psychologist' based on available types
-        keyword: 'psychiatrist' // Keyword to refine the search
+        radius: 5000, // Set to 5 km
+        type: ['health'], // You can also try using 'doctor' or 'hospital'
+        keyword: 'mental health' // Use keyword for mental health centers
       };
 
       service.nearbySearch(request, (results, status) => {
         if (status === window.google.maps.places.PlacesServiceStatus.OK) {
-          setPsychiatrists(results);
+          setMentalHealthCenters(results);
+        } else {
+          console.error("Error fetching mental health centers: ", status);
         }
       });
     }
   }, [userLocation]);
 
-  const fetchPsychiatristDetails = useCallback((psychiatrist) => {
+  const fetchCenterDetails = useCallback((center) => {
     if (window.google) {
       const service = new window.google.maps.places.PlacesService(document.createElement('div'));
       const request = {
-        placeId: psychiatrist.place_id,
+        placeId: center.place_id,
         fields: ['name', 'formatted_address', 'formatted_phone_number', 'rating']
       };
 
       service.getDetails(request, (place, status) => {
         if (status === window.google.maps.places.PlacesServiceStatus.OK) {
-          setSelectedPsychiatrist({
-            ...psychiatrist,
+          setSelectedCenter({
+            ...center,
             ...place
           });
         }
@@ -80,12 +82,12 @@ const App = () => {
   }, []);
 
   const onMapLoad = useCallback((map) => {
-    searchNearbyPsychiatrists(map);
-  }, [searchNearbyPsychiatrists]);
+    searchNearbyMentalHealthCenters(map);
+  }, [searchNearbyMentalHealthCenters]);
 
-  const handlePsychiatristClick = useCallback((psychiatrist) => {
-    fetchPsychiatristDetails(psychiatrist);
-  }, [fetchPsychiatristDetails]);
+  const handleCenterClick = useCallback((center) => {
+    fetchCenterDetails(center);
+  }, [fetchCenterDetails]);
 
   if (loadError) return <div>Error loading maps</div>;
   if (!isLoaded) return <div>Loading Maps</div>;
@@ -104,7 +106,7 @@ const App = () => {
         fontWeight: 'bold',
         color: 'black'
       }}>
-        Psychiatrists Near You
+        Mental Health Centers Near You
       </div>
       <GoogleMap
         mapContainerStyle={mapContainerStyle}
@@ -120,40 +122,40 @@ const App = () => {
             }}
           />
         )}
-        {psychiatrists.map((psychiatrist) => (
+        {mentalHealthCenters.map((center) => (
           <Marker
-            key={psychiatrist.place_id}
+            key={center.place_id}
             position={{
-              lat: psychiatrist.geometry.location.lat(),
-              lng: psychiatrist.geometry.location.lng()
+              lat: center.geometry.location.lat(),
+              lng: center.geometry.location.lng()
             }}
             icon={{
-              url: "https://maps.google.com/mapfiles/ms/icons/doctor.png" // You can use a doctor icon or customize it
+              url: "https://maps.google.com/mapfiles/ms/icons/hospital.png" // You can customize this icon
             }}
-            onClick={() => handlePsychiatristClick(psychiatrist)}
+            onClick={() => handleCenterClick(center)}
           />
         ))}
-        {selectedPsychiatrist && (
+        {selectedCenter && (
           <InfoWindow
             position={{
-              lat: selectedPsychiatrist.geometry.location.lat(),
-              lng: selectedPsychiatrist.geometry.location.lng()
+              lat: selectedCenter.geometry.location.lat(),
+              lng: selectedCenter.geometry.location.lng()
             }}
-            onCloseClick={() => setSelectedPsychiatrist(null)}
+            onCloseClick={() => setSelectedCenter(null)}
           >
             <div style={{ padding: '10px', maxWidth: '200px' }}>
-              <h3 style={{ margin: '0 0 10px', fontSize: '16px', color: 'black' }}>{selectedPsychiatrist.name}</h3>
+              <h3 style={{ margin: '0 0 10px', fontSize: '16px', color: 'black' }}>{selectedCenter.name}</h3>
               <p style={{ margin: '0 0 5px', fontSize: '14px', color: 'black' }}>
-                Address: {selectedPsychiatrist.formatted_address || selectedPsychiatrist.vicinity || 'Not available'}
+                Address: {selectedCenter.formatted_address || selectedCenter.vicinity || 'Not available'}
               </p>
-              {selectedPsychiatrist.formatted_phone_number && (
+              {selectedCenter.formatted_phone_number && (
                 <p style={{ margin: '0 0 5px', fontSize: '14px', color: 'black' }}>
-                  Phone: {selectedPsychiatrist.formatted_phone_number}
+                  Phone: {selectedCenter.formatted_phone_number}
                 </p>
               )}
-              {selectedPsychiatrist.rating && (
+              {selectedCenter.rating && (
                 <p style={{ margin: '0', fontSize: '14px', color: 'black' }}>
-                  Rating: {selectedPsychiatrist.rating} / 5
+                  Rating: {selectedCenter.rating} / 5
                 </p>
               )}
             </div>
