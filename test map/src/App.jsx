@@ -122,11 +122,12 @@ const App = () => {
     lng: center.geometry.location.lng()
   }}
   icon={{
-    url: "https://upload.wikimedia.org/wikipedia/commons/1/1f/Hospital_icon.svg", // Hospital icon
+    url: "https://img.icons8.com/ios-filled/50/000000/hospital-room.png", // Hospital icon
     scaledSize: new window.google.maps.Size(30, 30) // Adjust size if necessary
   }}
   onClick={() => handleCenterClick(center)} // Click handler to fetch details
 />
+
 
         )}
         {mentalHealthCenters.map((center) => (
