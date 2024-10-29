@@ -6,12 +6,12 @@ const mapContainerStyle = {
   height: '100vh',
   position: 'absolute',
   top: 0,
-  left: 0
+  left: 0,
 };
 
 const center = {
   lat: 0,
-  lng: 0
+  lng: 0,
 };
 
 const App = () => {
@@ -47,15 +47,17 @@ const App = () => {
       const service = new window.google.maps.places.PlacesService(map);
       const request = {
         location: userLocation,
-        radius: 100000, // Set to 100 km
-        keyword: 'mental health', // Keyword for mental health centers
-      type: ['doctor', 'health', 'hospital','therapist','counsellor'], // Try using multiple types
-
+        radius: 50000, // Set to 50 km
+        keyword: 'mental health center', // More specific keyword
+        type: ['doctor', 'health', 'hospital', 'therapist', 'counselor', 'clinic', 'psychologist'], // Include more types
       };
 
-      service.nearbySearch(request, (results, status) => {
+      service.nearbySearch(request, (results, status, pagination) => {
         if (status === window.google.maps.places.PlacesServiceStatus.OK) {
-          setMentalHealthCenters(results);
+          setMentalHealthCenters((prev) => [...prev, ...results]); // Append new results to the previous state
+          if (pagination.hasNextPage) {
+            pagination.nextPage(); // Fetch next page if available
+          }
         } else {
           console.error("Error fetching mental health centers: ", status);
         }
@@ -68,14 +70,14 @@ const App = () => {
       const service = new window.google.maps.places.PlacesService(document.createElement('div'));
       const request = {
         placeId: center.place_id,
-        fields: ['name', 'formatted_address', 'formatted_phone_number', 'rating']
+        fields: ['name', 'formatted_address', 'formatted_phone_number', 'rating'],
       };
 
       service.getDetails(request, (place, status) => {
         if (status === window.google.maps.places.PlacesServiceStatus.OK) {
           setSelectedCenter({
             ...center,
-            ...place
+            ...place,
           });
         }
       });
@@ -105,7 +107,7 @@ const App = () => {
         padding: '10px',
         borderRadius: '5px',
         fontWeight: 'bold',
-        color: 'black'
+        color: 'black',
       }}>
         Mental Health Centers Near You
       </div>
@@ -117,10 +119,7 @@ const App = () => {
       >
         {userLocation && (
           <Marker 
-            position={userLocation}
-            icon={{
-              url: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png" // User location marker
-            }}
+            position={userLocation} // User location marker
           />
         )}
         {mentalHealthCenters.map((center) => (
@@ -128,16 +127,16 @@ const App = () => {
             key={center.place_id}
             position={{
               lat: center.geometry.location.lat(),
-              lng: center.geometry.location.lng()
+              lng: center.geometry.location.lng(),
             }}
-            onClick={() => handleCenterClick(center)} // Click handler to fetch details
+            onClick={() => handleCenterClick(center)} // Handle center click
           />
         ))}
         {selectedCenter && (
           <InfoWindow
             position={{
               lat: selectedCenter.geometry.location.lat(),
-              lng: selectedCenter.geometry.location.lng()
+              lng: selectedCenter.geometry.location.lng(),
             }}
             onCloseClick={() => setSelectedCenter(null)}
           >
