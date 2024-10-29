@@ -47,8 +47,8 @@ const App = () => {
       const service = new window.google.maps.places.PlacesService(map);
       const request = {
         location: userLocation,
-        radius: 5000, // Set to 5 km
-        type: ['health'], // You can also try using 'doctor' or 'hospital'
+        radius: 50000, // Set to 50 km
+        type: ['health'], // You can also try using 'doctor'
         keyword: 'mental health' // Use keyword for mental health centers
       };
 
@@ -118,7 +118,7 @@ const App = () => {
           <Marker 
             position={userLocation}
             icon={{
-              url: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png"
+              url: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png" // User location marker
             }}
           />
         )}
@@ -129,10 +129,7 @@ const App = () => {
               lat: center.geometry.location.lat(),
               lng: center.geometry.location.lng()
             }}
-            icon={{
-              url: "https://maps.google.com/mapfiles/ms/icons/hospital.png" // You can customize this icon
-            }}
-            onClick={() => handleCenterClick(center)}
+            onClick={() => handleCenterClick(center)} // Click handler to fetch details
           />
         ))}
         {selectedCenter && (
