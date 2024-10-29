@@ -47,9 +47,10 @@ const App = () => {
       const service = new window.google.maps.places.PlacesService(map);
       const request = {
         location: userLocation,
-        radius: 50000, // Set to 50 km
-        type: ['health'], // You can also try using 'doctor'
-        keyword: 'mental health' // Use keyword for mental health centers
+        radius: 100000, // Set to 100 km
+        keyword: 'mental health', // Keyword for mental health centers
+      type: ['doctor', 'health', 'hospital','therapist','counsellor'], // Try using multiple types
+
       };
 
       service.nearbySearch(request, (results, status) => {
