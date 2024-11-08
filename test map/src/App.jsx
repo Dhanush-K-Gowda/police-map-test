@@ -6,12 +6,12 @@ const mapContainerStyle = {
   height: '100vh',
   position: 'absolute',
   top: 0,
-  left: 0,
+  left: 0
 };
 
 const center = {
   lat: 0,
-  lng: 0,
+  lng: 0
 };
 
 const App = () => {
@@ -21,8 +21,8 @@ const App = () => {
   });
 
   const [userLocation, setUserLocation] = useState(null);
-  const [mentalHealthCenters, setMentalHealthCenters] = useState([]);
-  const [selectedCenter, setSelectedCenter] = useState(null);
+  const [policeStations, setPoliceStations] = useState([]);
+  const [selectedStation, setSelectedStation] = useState(null);
 
   useEffect(() => {
     if (navigator.geolocation) {
@@ -42,42 +42,36 @@ const App = () => {
     }
   }, []);
 
-  const searchNearbyMentalHealthCenters = useCallback((map) => {
+  const searchNearbyPoliceStations = useCallback((map) => {
     if (userLocation && window.google) {
       const service = new window.google.maps.places.PlacesService(map);
       const request = {
         location: userLocation,
-        radius: 50000, // Set to 50 km
-        keyword: 'mental health center', // More specific keyword
-        type: ['doctor', 'health', 'hospital', 'therapist', 'counselor', 'clinic', 'psychologist'], // Include more types
+        radius: 50000,
+        type: ['police']
       };
 
-      service.nearbySearch(request, (results, status, pagination) => {
+      service.nearbySearch(request, (results, status) => {
         if (status === window.google.maps.places.PlacesServiceStatus.OK) {
-          setMentalHealthCenters((prev) => [...prev, ...results]); // Append new results to the previous state
-          if (pagination.hasNextPage) {
-            pagination.nextPage(); // Fetch next page if available
-          }
-        } else {
-          console.error("Error fetching mental health centers: ", status);
+          setPoliceStations(results);
         }
       });
     }
   }, [userLocation]);
 
-  const fetchCenterDetails = useCallback((center) => {
+  const fetchStationDetails = useCallback((station) => {
     if (window.google) {
       const service = new window.google.maps.places.PlacesService(document.createElement('div'));
       const request = {
-        placeId: center.place_id,
-        fields: ['name', 'formatted_address', 'formatted_phone_number', 'rating'],
+        placeId: station.place_id,
+        fields: ['name', 'formatted_address', 'formatted_phone_number', 'rating']
       };
 
       service.getDetails(request, (place, status) => {
         if (status === window.google.maps.places.PlacesServiceStatus.OK) {
-          setSelectedCenter({
-            ...center,
-            ...place,
+          setSelectedStation({
+            ...station,
+            ...place
           });
         }
       });
@@ -85,12 +79,12 @@ const App = () => {
   }, []);
 
   const onMapLoad = useCallback((map) => {
-    searchNearbyMentalHealthCenters(map);
-  }, [searchNearbyMentalHealthCenters]);
+    searchNearbyPoliceStations(map);
+  }, [searchNearbyPoliceStations]);
 
-  const handleCenterClick = useCallback((center) => {
-    fetchCenterDetails(center);
-  }, [fetchCenterDetails]);
+  const handleStationClick = useCallback((station) => {
+    fetchStationDetails(station);
+  }, [fetchStationDetails]);
 
   if (loadError) return <div>Error loading maps</div>;
   if (!isLoaded) return <div>Loading Maps</div>;
@@ -107,9 +101,9 @@ const App = () => {
         padding: '10px',
         borderRadius: '5px',
         fontWeight: 'bold',
-        color: 'black',
+        color:'black'
       }}>
-        Mental Health Centers Near You
+        Stations Near You
       </div>
       <GoogleMap
         mapContainerStyle={mapContainerStyle}
@@ -119,40 +113,46 @@ const App = () => {
       >
         {userLocation && (
           <Marker 
-            position={userLocation} // User location marker
+            position={userLocation}
+            icon={{
+              url: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png"
+            }}
           />
         )}
-        {mentalHealthCenters.map((center) => (
+        {policeStations.map((station) => (
           <Marker
-            key={center.place_id}
+            key={station.place_id}
             position={{
-              lat: center.geometry.location.lat(),
-              lng: center.geometry.location.lng(),
+              lat: station.geometry.location.lat(),
+              lng: station.geometry.location.lng()
             }}
-            onClick={() => handleCenterClick(center)} // Handle center click
+            icon={{
+              url: "https://maps.google.com/mapfiles/ms/icons/police.png"
+            }}
+            onClick={() => handleStationClick(station)}
           />
         ))}
-        {selectedCenter && (
+        {selectedStation && (
           <InfoWindow
             position={{
-              lat: selectedCenter.geometry.location.lat(),
-              lng: selectedCenter.geometry.location.lng(),
+              lat: selectedStation.geometry.location.lat(),
+              lng: selectedStation.geometry.location.lng()
             }}
-            onCloseClick={() => setSelectedCenter(null)}
+            onCloseClick={() => setSelectedStation(null)}
           >
             <div style={{ padding: '10px', maxWidth: '200px' }}>
-              <h3 style={{ margin: '0 0 10px', fontSize: '16px', color: 'black' }}>{selectedCenter.name}</h3>
-              <p style={{ margin: '0 0 5px', fontSize: '14px', color: 'black' }}>
-                Address: {selectedCenter.formatted_address || selectedCenter.vicinity || 'Not available'}
+              <h3 style={{ margin: '0 0 10px', fontSize: '16px',color:'black' }}>{selectedStation.name}</h3>
+              <p style={{ margin: '0 0 5px', fontSize: '14px',color:'black' }}>
+                Address: {selectedStation.formatted_address || selectedStation.vicinity || 'Not available'}
               </p>
-              {selectedCenter.formatted_phone_number && (
-                <p style={{ margin: '0 0 5px', fontSize: '14px', color: 'black' }}>
-                  Phone: {selectedCenter.formatted_phone_number}
+              {selectedStation.formatted_phone_number && (
+                <p style={{ margin: '0 0 5px', fontSize: '14px',color:'black' }}>
+                  Phone: {selectedStation.formatted_phone_number}
                 </p>
               )}
-              {selectedCenter.rating && (
-                <p style={{ margin: '0', fontSize: '14px', color: 'black' }}>
-                  Rating: {selectedCenter.rating} / 5
+              {selectedStation.rating && (
+                <p style={{ margin: '0', fontSize: '14px',color:'black' }}>
+                  Rating: {selectedStation.rating} / 5
                 </p>
               )}
             </div>
